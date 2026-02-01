@@ -9,17 +9,14 @@ pragma solidity ^0.8.19;
 contract EthRefunder {
     event Received(address indexed from, uint256 amount);
     event Refunded(address indexed to, uint256 amount);
-    
 
     receive() external payable {
         emit Received(msg.sender, msg.value);
-        
-   
-        (bool success, ) = payable(msg.sender).call{value: msg.value}("");
-        
+
+        (bool success,) = payable(msg.sender).call{value: msg.value}("");
+
         if (success) {
             emit Refunded(msg.sender, msg.value);
         }
-
     }
 }

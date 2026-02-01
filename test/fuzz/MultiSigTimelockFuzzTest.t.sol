@@ -90,27 +90,20 @@ contract MultiSigTimeLockFuzzTest is Test {
         assertGe(multiSigTimelock.getSignerCount(), 1);
     }
 
-    function check_3_signatures_should_pass(address to,uint256 value) grantSigningRoles public  {
-        
+    function check_3_signatures_should_pass(address to, uint256 value) public grantSigningRoles {
         vm.assume(to != address(0) && to != address(multiSigTimelock));
         value = bound(value, 0, 150 ether);
         vm.deal(address(multiSigTimelock), 150 ether);
-        
-        address[5] memory signers = [
-        multiSigTimelock.owner(),
-        SIGNER_TWO,
-        SIGNER_THREE,
-        SIGNER_FOUR,
-        SIGNER_FIVE
-        ];
+
+        address[5] memory signers = [multiSigTimelock.owner(), SIGNER_TWO, SIGNER_THREE, SIGNER_FOUR, SIGNER_FIVE];
         uint256 balanceBefore = address(multiSigTimelock).balance;
 
         vm.prank(multiSigTimelock.owner());
         uint256 txnId = multiSigTimelock.proposeTransaction(to, value, "");
-        
+
         vm.prank(multiSigTimelock.owner());
         multiSigTimelock.confirmTransaction(txnId);
-     
+
         address secondSigner = signers[1];
         vm.prank(secondSigner);
         multiSigTimelock.confirmTransaction(txnId);
@@ -118,9 +111,9 @@ contract MultiSigTimeLockFuzzTest is Test {
         address thirdSigner = signers[2];
         vm.prank(thirdSigner);
         multiSigTimelock.confirmTransaction(txnId);
-       
+
         vm.warp(block.timestamp + 8 days);
-        
+
         vm.prank(multiSigTimelock.owner());
         multiSigTimelock.executeTransaction(txnId);
 
@@ -130,32 +123,28 @@ contract MultiSigTimeLockFuzzTest is Test {
         uint256 balanceAfter = address(multiSigTimelock).balance;
 
         assertEq(balanceAfter, balanceBefore - value);
-       
     }
 
-    
-    function check_if_2_signatures_will_not_executed(address to,uint256 value) grantSigningRoles public  {
-        
+    function check_if_2_signatures_will_not_executed(address to, uint256 value) public grantSigningRoles {
         vm.assume(to != address(0) && to != address(multiSigTimelock));
         value = bound(value, 0, 1 ether);
         vm.deal(address(multiSigTimelock), 150 ether);
-        
+
         uint256 balanceBefore = address(multiSigTimelock).balance;
 
         vm.prank(multiSigTimelock.owner());
         uint256 txnId = multiSigTimelock.proposeTransaction(to, value, "");
-        
+
         vm.prank(SIGNER_TWO);
         multiSigTimelock.confirmTransaction(txnId);
-     
+
         vm.prank(SIGNER_THREE);
         multiSigTimelock.confirmTransaction(txnId);
 
-        
         vm.prank(multiSigTimelock.owner());
-        try multiSigTimelock.executeTransaction(txnId){
+        try multiSigTimelock.executeTransaction(txnId) {
             assert(false);
-        }catch{}
+        } catch {}
 
         MultiSigTimelock.Transaction memory trx = multiSigTimelock.getTransaction(txnId);
 
@@ -163,37 +152,29 @@ contract MultiSigTimeLockFuzzTest is Test {
         uint256 balanceAfter = address(multiSigTimelock).balance;
 
         assertEq(balanceAfter, balanceBefore);
-       
     }
 
     function check_propose_access_control(address caller, address to, uint256 value, bytes calldata data) public {
-    vm.assume(caller != multiSigTimelock.owner());
-  
-    vm.prank(caller);   
-    try multiSigTimelock.proposeTransaction(to, value, data) {
-        assert(false);
-    } catch {
-        assert(true);
-    }}
+        vm.assume(caller != multiSigTimelock.owner());
 
-function check_cannot_grant_role_via_proposal(address maliciousSigner, uint256 trxId) public {
-    
-    MultiSigTimelock.Transaction memory trx = multiSigTimelock.getTransaction(trxId);
-    
-    bytes memory maliciousData = abi.encodeWithSelector(multiSigTimelock.grantSigningRole.selector, maliciousSigner);
-    
-    if (trx.to == address(multiSigTimelock) && keccak256(trx.data) == keccak256(maliciousData)) {
-        
-        vm.prank(address(multiSigTimelock)); 
-        multiSigTimelock.executeTransaction(trxId);
-        assert(!multiSigTimelock.hasRole(multiSigTimelock.getSigningRole(), maliciousSigner));
+        vm.prank(caller);
+        try multiSigTimelock.proposeTransaction(to, value, data) {
+            assert(false);
+        } catch {
+            assert(true);
+        }
+    }
+
+    function check_cannot_grant_role_via_proposal(address maliciousSigner, uint256 trxId) public {
+        MultiSigTimelock.Transaction memory trx = multiSigTimelock.getTransaction(trxId);
+
+        bytes memory maliciousData = abi.encodeWithSelector(multiSigTimelock.grantSigningRole.selector, maliciousSigner);
+
+        if (trx.to == address(multiSigTimelock) && keccak256(trx.data) == keccak256(maliciousData)) {
+            vm.prank(address(multiSigTimelock));
+            multiSigTimelock.executeTransaction(trxId);
+            assert(!multiSigTimelock.hasRole(multiSigTimelock.getSigningRole(), maliciousSigner));
+        }
     }
 }
-
-
-
-}
-
-    
-
 

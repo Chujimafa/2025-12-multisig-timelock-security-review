@@ -613,8 +613,6 @@ contract MultiSigTimeLockTest is Test {
         assertEq(deployedContractWithRun.getTransaction(0).confirmations, 1);
     }
 
-
-
     function testNoZero() public grantSigningRoles {
         vm.prank(OWNER);
 
@@ -641,21 +639,19 @@ contract MultiSigTimeLockTest is Test {
         vm.prank(SIGNER_FOUR);
         multiSigTimelock.renounceRole(role, SIGNER_FOUR);
 
-        
         uint256 signerCount = multiSigTimelock.getSignerCount();
         console2.log(signerCount);
         address[5] memory signers = multiSigTimelock.getSigners();
 
-
         for (uint256 i = 0; i < signerCount; i++) {
-           assert(multiSigTimelock.hasRole(multiSigTimelock.getSigningRole(),signers[i]));
-       }   
+            assert(multiSigTimelock.hasRole(multiSigTimelock.getSigningRole(), signers[i]));
+        }
 
-       vm.expectRevert();
+        vm.expectRevert();
         vm.prank(OWNER);
-       multiSigTimelock.grantSigningRole(SIGNER_TWO);
-        
-}
+        multiSigTimelock.grantSigningRole(SIGNER_TWO);
+    }
+
     function testNoAccoutingSystem() public grantSigningRoles {
         vm.deal(address(multiSigTimelock), 10 ether);
 
@@ -671,7 +667,6 @@ contract MultiSigTimeLockTest is Test {
 
         vm.stopPrank();
 
-        
         vm.startPrank(SIGNER_TWO);
         multiSigTimelock.confirmTransaction(trxId_1);
 
@@ -689,7 +684,6 @@ contract MultiSigTimeLockTest is Test {
         uint256 gasAfter3 = gasleft();
         uint256 gasWaste3 = gasBefore3 - gasAfter3;
         vm.stopPrank();
-
 
         vm.warp(block.timestamp + 1 days);
 
@@ -722,12 +716,11 @@ contract MultiSigTimeLockTest is Test {
     }
 
     function testCentralization() public grantSigningRoles {
-
-         vm.deal(address(multiSigTimelock), 100 ether);
+        vm.deal(address(multiSigTimelock), 100 ether);
 
         // assume owner have another two wallet
-        address OWNER_SECOND_WALLET= makeAddr("owner_2");
-        address OWNER_THIRD_WALLET= makeAddr("owner_3");
+        address OWNER_SECOND_WALLET = makeAddr("owner_2");
+        address OWNER_THIRD_WALLET = makeAddr("owner_3");
 
         vm.startPrank(OWNER);
         // revoke the other signers
@@ -740,13 +733,13 @@ contract MultiSigTimeLockTest is Test {
         multiSigTimelock.transferOwnership(OWNER_SECOND_WALLET);
         vm.stopPrank();
 
-        // new owner of the contract 
+        // new owner of the contract
         vm.startPrank(OWNER_SECOND_WALLET);
         // malicious propose
-        uint256 trx_Id=multiSigTimelock.proposeTransaction(OWNER_THIRD_WALLET,100 ether,"");
+        uint256 trx_Id = multiSigTimelock.proposeTransaction(OWNER_THIRD_WALLET, 100 ether, "");
         multiSigTimelock.confirmTransaction(trx_Id);
         vm.stopPrank();
-        
+
         // owner still have the SigningRole
         vm.prank(OWNER);
         multiSigTimelock.confirmTransaction(trx_Id);
@@ -758,47 +751,45 @@ contract MultiSigTimeLockTest is Test {
         multiSigTimelock.executeTransaction(trx_Id);
 
         //drain the money
-        assertEq(address(multiSigTimelock).balance,0);
+        assertEq(address(multiSigTimelock).balance, 0);
 
         MultiSigTimelock.Transaction memory trx = multiSigTimelock.getTransaction(trx_Id);
         assert(trx.confirmations >= 3);
         assert(trx.executed);
-
     }
 
-    function testRevokeSigningRoleDoesNotAffectExistingConfirmations() grantSigningRoles public  {
-        
-     vm.deal(address(multiSigTimelock), 100 ether);
-     address recipient = makeAddr("recipient");
-
-    vm.prank(OWNER);
-    uint256 trx_Id=multiSigTimelock.proposeTransaction(recipient,100 ether,"");
-
-    vm.prank(SIGNER_TWO);
-    multiSigTimelock.confirmTransaction(trx_Id);
-    vm.prank(SIGNER_THREE);
-    multiSigTimelock.confirmTransaction(trx_Id);
-    vm.prank(SIGNER_FOUR);
-    multiSigTimelock.confirmTransaction(trx_Id);
-
-    vm.prank(OWNER);
-    multiSigTimelock.revokeSigningRole(SIGNER_TWO);
-    
-    vm.warp(block.timestamp + 7 days);
-    vm.prank(SIGNER_FOUR);
-    multiSigTimelock.executeTransaction(trx_Id);
-
-    MultiSigTimelock.Transaction memory trx = multiSigTimelock.getTransaction(trx_Id);
-    assert(trx.confirmations >= 3);
-    assert(trx.executed);
-    }
-
-    function testTransferToSelf() public  grantSigningRoles {
+    function testRevokeSigningRoleDoesNotAffectExistingConfirmations() public grantSigningRoles {
         vm.deal(address(multiSigTimelock), 100 ether);
         address recipient = makeAddr("recipient");
 
         vm.prank(OWNER);
-        uint256 trx_Id_1=multiSigTimelock.proposeTransaction(address(multiSigTimelock),95 ether,"");
+        uint256 trx_Id = multiSigTimelock.proposeTransaction(recipient, 100 ether, "");
+
+        vm.prank(SIGNER_TWO);
+        multiSigTimelock.confirmTransaction(trx_Id);
+        vm.prank(SIGNER_THREE);
+        multiSigTimelock.confirmTransaction(trx_Id);
+        vm.prank(SIGNER_FOUR);
+        multiSigTimelock.confirmTransaction(trx_Id);
+
+        vm.prank(OWNER);
+        multiSigTimelock.revokeSigningRole(SIGNER_TWO);
+
+        vm.warp(block.timestamp + 7 days);
+        vm.prank(SIGNER_FOUR);
+        multiSigTimelock.executeTransaction(trx_Id);
+
+        MultiSigTimelock.Transaction memory trx = multiSigTimelock.getTransaction(trx_Id);
+        assert(trx.confirmations >= 3);
+        assert(trx.executed);
+    }
+
+    function testTransferToSelf() public grantSigningRoles {
+        vm.deal(address(multiSigTimelock), 100 ether);
+        address recipient = makeAddr("recipient");
+
+        vm.prank(OWNER);
+        uint256 trx_Id_1 = multiSigTimelock.proposeTransaction(address(multiSigTimelock), 95 ether, "");
 
         vm.prank(SIGNER_TWO);
         multiSigTimelock.confirmTransaction(trx_Id_1);
@@ -815,14 +806,12 @@ contract MultiSigTimeLockTest is Test {
 
         uint256 balanceAfter = address(multiSigTimelock).balance;
 
-        assertGt( balanceBefore, balanceAfter);
-
-        
+        assertGt(balanceBefore, balanceAfter);
     }
 
-    function test_RevertOnFailedExecutionAndStateRollback() public  grantSigningRoles  {
+    function test_RevertOnFailedExecutionAndStateRollback() public grantSigningRoles {
         vm.deal(address(multiSigTimelock), 10 ether);
-        
+
         vm.prank(OWNER);
         uint256 txId = multiSigTimelock.proposeTransaction(address(ethRejector), 1 ether, "0x1234");
 
@@ -841,15 +830,15 @@ contract MultiSigTimeLockTest is Test {
 
         uint256 gasBefore = gasleft();
         vm.expectRevert();
-        vm.prank(SIGNER_FOUR);       
+        vm.prank(SIGNER_FOUR);
         multiSigTimelock.executeTransaction(txId);
         uint256 gasAfter = gasleft();
 
         MultiSigTimelock.Transaction memory txn = multiSigTimelock.getTransaction(txId);
-        
+
         assertEq(txn.executed, false);
-        
-        console2.log("gas waste:", gasBefore- gasAfter);
+
+        console2.log("gas waste:", gasBefore - gasAfter);
     }
 
     function testproposeSplitTransactions() public grantSigningRoles {
@@ -860,35 +849,29 @@ contract MultiSigTimeLockTest is Test {
 
         uint256 BalanceRecipientBefore = recipient.balance;
         vm.prank(OWNER);
-        for(uint256 i=0;i<timesToSend;i++){
-            multiSigTimelock.proposeTransaction(recipient,amountToSend,"i");            
+        for (uint256 i = 0; i < timesToSend; i++) {
+            multiSigTimelock.proposeTransaction(recipient, amountToSend, "i");
         }
 
         address[3] memory signersToConfirm = [OWNER, SIGNER_TWO, SIGNER_THREE];
-        for(uint256 s=0; s < signersToConfirm.length; s++) {
+        for (uint256 s = 0; s < signersToConfirm.length; s++) {
             vm.startPrank(signersToConfirm[s]);
-            for(uint256 i=0; i < timesToSend; i++) {
-                 multiSigTimelock.confirmTransaction(i);
+            for (uint256 i = 0; i < timesToSend; i++) {
+                multiSigTimelock.confirmTransaction(i);
+            }
+            vm.stopPrank();
         }
-        vm.stopPrank();
-      }
 
         vm.warp(block.timestamp + 1 days);
 
         vm.prank(OWNER);
-         for(uint256 i=0;i<timesToSend;i++){
-            multiSigTimelock.executeTransaction(i);            
+        for (uint256 i = 0; i < timesToSend; i++) {
+            multiSigTimelock.executeTransaction(i);
         }
 
         uint256 BalanceRecipientAfter = recipient.balance;
 
-        assertEq(BalanceRecipientAfter,BalanceRecipientBefore + amountToSend*timesToSend);
+        assertEq(BalanceRecipientAfter, BalanceRecipientBefore + amountToSend * timesToSend);
         console2.log("BalanceRecipientAfter:", BalanceRecipientAfter);
-
     }
-
-
-
-
-
 }
