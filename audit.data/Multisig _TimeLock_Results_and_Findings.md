@@ -2,6 +2,13 @@
 
 This document summarizes the results and key findings from my participation in the `Codehawk` audit contest, held for the `Multisig-TimeLock` codebase.
 
+- [Audit Contest Summary: \[Multisig TimeLock\]](#audit-contest-summary-multisig-timelock)
+  - [1. Overview \& Project Details](#1-overview--project-details)
+  - [2. Contest Performance Summary](#2-contest-performance-summary)
+- [Detailed Audit Findings (Valid Submissions)](#detailed-audit-findings-valid-submissions)
+    - [\[H-1\] Single-transaction value-based delay logic can be bypassed via transaction splitting](#h-1-single-transaction-value-based-delay-logic-can-be-bypassed-via-transaction-splitting)
+    - [\[M-1\] Revoked Signer’s Confirmation Remains Valid for Transaction Execution](#m-1-revoked-signers-confirmation-remains-valid-for-transaction-execution)
+    - [\[L-1\] Ghost Signers in `s_signers` list lead to permanent Multi-Sig Wallet Lock](#l-1-ghost-signers-in-s_signers-list-lead-to-permanent-multi-sig-wallet-lock)
 
 
 ## 1. Overview & Project Details
